@@ -3,20 +3,42 @@ const cors = require("cors");
 const db = require("./db");
 const QRCode = require("qrcode");
 
-const app = express(); // MUST be first
+const app = express();
+
+/* =========================
+   CORS FIX (PRODUCTION SAFE)
+========================= */
+const allowedOrigins = [
+  "https://banco-de-pogi.netlify.app",
+  "http://localhost:3000"
+];
 
 app.use(cors({
-  origin: "https://banco-de-pogi.netlify.app",
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Blocked by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+app.options("*", cors());
 
 app.use(express.json());
 
 /* =========================
+   HEALTH CHECK
+========================= */
+app.get("/", (req, res) => {
+  res.send("BANCO DE POGI API IS RUNNING 🚀");
+});
+
+/* =========================
    HELPERS
 ========================= */
-
 function generateUserNum() {
   return Math.floor(10000 + Math.random() * 90000);
 }
@@ -26,30 +48,24 @@ function generateAccountNumber() {
 }
 
 async function addNotification(userNum, message) {
-  await db.execute(
-    `INSERT INTO notifications (user_num, message)
-     VALUES (?, ?)`,
-    [userNum, message]
-  );
+  try {
+    await db.execute(
+      "INSERT INTO notifications (user_num, message) VALUES (?, ?)",
+      [userNum, message]
+    );
+  } catch (err) {
+    console.log("Notification error:", err.message);
+  }
 }
-
-/* =========================
-   TEST ROUTE
-========================= */
-
-app.get("/", (req, res) => {
-  res.send("BANCO DE POGI API RUNNING");
-});
 
 /* =========================
    CREATE ACCOUNT
 ========================= */
-
 app.post("/api/account/create", async (req, res) => {
   try {
     const { name } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!name) {
       return res.status(400).json({ error: "Name required" });
     }
 
@@ -68,22 +84,20 @@ app.post("/api/account/create", async (req, res) => {
     res.json({
       userNum,
       accountNumber,
-      name,
       qrCode,
-      balance: 0,
-      transactions: []
+      name,
+      balance: 0
     });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 /* =========================
    LOGIN
 ========================= */
-
 app.post("/api/account/login", async (req, res) => {
   try {
     const { userNum, pin } = req.body;
@@ -94,32 +108,26 @@ app.post("/api/account/login", async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ error: "Account not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    const account = rows[0];
+    const user = rows[0];
 
-    if (account.pin !== pin) {
-      return res.status(400).json({ error: "Invalid PIN" });
+    if (user.pin !== pin) {
+      return res.status(400).json({ error: "Wrong PIN" });
     }
 
-    res.json({
-      userNum: account.user_num,
-      accountNumber: account.account_number,
-      name: account.full_name,
-      balance: Number(account.balance)
-    });
+    res.json(user);
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 /* =========================
-   SETUP PIN
+   SET PIN (IMPORTANT FIX)
 ========================= */
-
 app.post("/api/account/:userNum/setup-pin", async (req, res) => {
   try {
     const { userNum } = req.params;
@@ -134,128 +142,18 @@ app.post("/api/account/:userNum/setup-pin", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 /* =========================
-   DEPOSIT
+   SERVER (ONLY ONE LISTENER!)
 ========================= */
-
-app.post("/api/account/:userNum/deposit", async (req, res) => {
-  try {
-    const { userNum } = req.params;
-    const { amount } = req.body;
-
-    const [rows] = await db.execute(
-      "SELECT * FROM accounts WHERE user_num = ?",
-      [userNum]
-    );
-
-    const account = rows[0];
-    const newBalance = Number(account.balance) + Number(amount);
-
-    await db.execute(
-      "UPDATE accounts SET balance = ? WHERE user_num = ?",
-      [newBalance, userNum]
-    );
-
-    res.json({ balance: newBalance });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-/* =========================
-   WITHDRAW
-========================= */
-
-app.post("/api/account/:userNum/withdraw", async (req, res) => {
-  try {
-    const { userNum } = req.params;
-    const { amount } = req.body;
-
-    const [rows] = await db.execute(
-      "SELECT * FROM accounts WHERE user_num = ?",
-      [userNum]
-    );
-
-    const account = rows[0];
-
-    if (Number(amount) > Number(account.balance)) {
-      return res.status(400).json({ error: "Insufficient balance" });
-    }
-
-    const newBalance = Number(account.balance) - Number(amount);
-
-    await db.execute(
-      "UPDATE accounts SET balance = ? WHERE user_num = ?",
-      [newBalance, userNum]
-    );
-
-    res.json({ balance: newBalance });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-/* =========================
-   SEND MONEY
-========================= */
-
-app.post("/api/account/:userNum/send-money", async (req, res) => {
-  try {
-    const { userNum } = req.params;
-    const { recipientAcct, amount } = req.body;
-
-    const [senderRows] = await db.execute(
-      "SELECT * FROM accounts WHERE user_num = ?",
-      [userNum]
-    );
-
-    const sender = senderRows[0];
-
-    const [receiverRows] = await db.execute(
-      "SELECT * FROM accounts WHERE account_number = ?",
-      [recipientAcct]
-    );
-
-    const receiver = receiverRows[0];
-
-    const senderBal = Number(sender.balance) - Number(amount);
-    const receiverBal = Number(receiver.balance) + Number(amount);
-
-    await db.execute(
-      "UPDATE accounts SET balance = ? WHERE user_num = ?",
-      [senderBal, userNum]
-    );
-
-    await db.execute(
-      "UPDATE accounts SET balance = ? WHERE account_number = ?",
-      [receiverBal, recipientAcct]
-    );
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
-/* =========================
-   SERVER START (ONLY ONCE)
-========================= */
-
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
   console.log("=================================");
-  console.log(" BANCO DE POGI RESTORED SERVER ");
+  console.log(" BANCO DE POGI RUNNING ");
   console.log(" PORT:", PORT);
   console.log("=================================");
 });
