@@ -1,14 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 
-app.use(cors({
-  origin: "https://your-netlify-site.netlify.app"
-}));
 
 const db = require("./db");
 const QRCode = require("qrcode");
 
 const app = express();
+
+app.use(cors({
+  origin: "https://your-netlify-site.netlify.app"
+}));
 
 app.use(cors());
 app.use(express.json());
