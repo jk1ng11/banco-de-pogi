@@ -1,7 +1,7 @@
 const mysql = require("mysql2");
 require("dotenv").config();
 
-const db = mysql.createPool({
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -12,13 +12,15 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
-db.getConnection((err, connection) => {
+// DO NOT crash app if DB fails
+pool.getConnection((err, connection) => {
     if (err) {
-        console.log("❌ DB Connection Failed:", err);
-    } else {
-        console.log("✅ Connected to Clever Cloud MySQL!");
-        connection.release();
+        console.log("❌ DB Connection Failed:", err.message);
+        return;
     }
+
+    console.log("✅ Connected to Clever Cloud MySQL!");
+    connection.release();
 });
 
-module.exports = db;
+module.exports = pool;
