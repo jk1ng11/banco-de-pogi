@@ -3,29 +3,16 @@ const cors = require("cors");
 const db = require("./db");
 const QRCode = require("qrcode");
 
-const app = express();
-
-/* =========================
-   CORS (PRODUCTION FIX)
-========================= */
-
-const allowedOrigins = [
-  "https://banco-de-pogi.netlify.app",
-  "http://localhost:3000",
-  "http://127.0.0.1:5500"
-];
+const app = express(); // MUST be first
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(null, false);
-  },
+  origin: "https://banco-de-pogi.netlify.app",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.options("*", cors());
+app.options("/*", cors()); // FIX FOR RENDER NODE 24
+
 app.use(express.json());
 
 /* =========================
