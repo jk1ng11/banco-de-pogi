@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-require("./db");
+const db = require("./db");
 const QRCode = require("qrcode");
 
 const app = express();
