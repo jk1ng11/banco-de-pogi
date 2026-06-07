@@ -1,17 +1,15 @@
 const express = require("express");
 const cors = require("cors");
-
-
 const db = require("./db");
 const QRCode = require("qrcode");
 
 const app = express();
 
+// ✅ ONLY ONE CORS CONFIG
 app.use(cors({
-  origin: "https://your-netlify-site.netlify.app"
+  origin: "https://banco-de-pogi.netlify.app"
 }));
 
-app.use(cors());
 app.use(express.json());
 
 // TEST ROUTE
@@ -19,13 +17,11 @@ app.get("/", (req, res) => {
     res.send("BANCO SERVER VERSION 999");
 });
 
-const PORT = process.env.PORT || 3000 || 8080;
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
     console.log("Server running on port", PORT);
 });
-
-
 
 
 
