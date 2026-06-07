@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Banco De Pogi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:#0a1628; --navy2:#132040; --gold:#f0c040; --gold2:#e8a820;
+    --blue:#3783dd; --blue2:#2563c0; --green:#1d9e75; --red:#e24b4a;
+    --bg:#f0f2f5; --white:#ffffff; --border:#dce0e8;
+    --text:#14141e; --muted:#6878a0; --card-sh:0 2px 16px rgba(10,22,40,0.10);
+  }
+  body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px 0; }
+
+  .app{
+    width:100%;
+    max-width:430px;
+    margin:auto;
+}
+
+@media (min-width:1200px){
+
+    .app{
+        max-width:1400px;
+        width:95%;
+    }
+
+}
+
+
+  .screen { display:none; flex-direction:column; flex:1; }
+  .screen.active { display:flex; }
+
+  /* Setup */
+  .setup-hero { background:var(--navy); padding:48px 32px 36px; text-align:center; }
+  .setup-hero h1 { font-size:22px; font-weight:700; color:var(--gold); letter-spacing:2px; margin-top:12px; }
+  .setup-hero p  { font-size:11px; color:#7a9ab8; margin-top:4px; letter-spacing:1.5px; }
+  .setup-body { background:var(--white); flex:1; border-radius:28px 28px 0 0; margin-top:-20px; padding:32px 28px 28px; }
+  .setup-body h2 { font-size:20px; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .setup-body .sub { font-size:13px; color:var(--muted); margin-bottom:28px; }
+  .field { margin-bottom:18px; }
+  .field label { display:block; font-size:11px; font-weight:600; letter-spacing:1px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; }
+  .field input, .field select, .field textarea { width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:12px; font-size:14px; font-family:inherit; color:var(--text); outline:none; transition:border-color .2s; background:var(--white); }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--blue); }
+  .field select { appearance:none; cursor:pointer; }
+  .field textarea { resize:none; height:72px; }
+  .btn-primary { width:100%; padding:14px; background:var(--navy); color:var(--gold); border:none; border-radius:14px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:background .2s,transform .1s; margin-top:8px; }
+  .btn-primary:hover { background:var(--navy2); }
+  .btn-primary:active { transform:scale(0.98); }
+
+  .payment-confirm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.hidden {
+  display: none;
+}
+
+.payment-confirm-card {
+  background: white;
+  width: 400px;
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.payment-confirm-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.receipt-btn{
+  border:none;
+  background:#f0f2f5;
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
+
+/* Receipt
+*/
+.receipt-body{
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+}
+
+.receipt-banner{
+  background:#0a1628;
+  color:#f0c040;
+  text-align:center;
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:18px;
+}
+
+.receipt-bank{
+  font-size:24px;
+  font-weight:700;
+}
+
+.receipt-subtitle{
+  font-size:12px;
+  color:#c7d5e7;
+  margin-top:4px;
+}
+
+.receipt-status{
+  text-align:center;
+  background:#e7f8ef;
+  color:#1d9e75;
+  font-weight:700;
+  padding:10px;
+  border-radius:12px;
+  margin-bottom:18px;
+}
+
+.receipt-section{
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:14px;
+}
+
+.receipt-row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px dashed #d6dce5;
+}
+
+.receipt-row:last-child{
+  border-bottom:none;
+}
+
+.receipt-row span{
+  color:#6878a0;
+}
+
+.total-row{
+  font-size:20px;
+  color:#1d9e75;
+  font-weight:700;
+}
+
+.receipt-qr-title{
+  text-align:center;
+  margin-top:20px;
+  margin-bottom:10px;
+  color:#6878a0;
+  font-size:13px;
+}
+
+.receipt-qr{
+  display:flex;
+  justify-content:center;
+  margin-bottom:20px;
+}
+
+.receipt-footer{
+  text-align:center;
+  color:#6878a0;
+  font-size:12px;
+  margin-bottom:15px;
+}
+
+
+  /* Dashboard */
+  .dash-header { background:var(--navy); padding:20px 24px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .dash-header .brand { display:flex; align-items:center; gap:10px; }
+  .dash-header .brand .icon { font-size:26px; }
+  .dash-header .brand-text h3 { font-size:15px; font-weight:700; color:var(--gold); letter-spacing:1.5px; }
+  .dash-header .brand-text p  { font-size:10px; color:#7a9ab8; letter-spacing:1px; }
+  /* Hamburger Menu */
+  .menu-btn { background:none; border:none; color:#7a9ab8; font-size:24px; cursor:pointer; padding:0; transition:color .2s; position:relative; }
+  .menu-btn:hover { color:#fff; }
+  .menu-dropdown { display:none; position:absolute; top:100%; right:0; background:var(--white); border-radius:12px; box-shadow:0 8px 24px rgba(10,22,40,0.2); min-width:180px; z-index:50; overflow:hidden; margin-top:8px; }
+  .menu-dropdown.open { display:block; }
+  .menu-item { display:block; width:100%; padding:12px 18px; border:none; background:none; text-align:left; font-family:inherit; font-size:13px; color:var(--text); cursor:pointer; transition:background .2s; }
+  .menu-item:first-child { border-top:none; }
+  .menu-item:hover { background:var(--bg); }
+  .menu-item.danger { color:var(--red); }
+  .dash-scroll { flex:1; overflow-y:auto; padding:0 18px 24px; background:var(--bg); }
+  .dash-scroll::-webkit-scrollbar { width:4px; }
+  .dash-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+  /* Balance Card */
+  .balance-card {
+  background: var(--navy);
+  border-radius: 20px;      
+  padding: 20px;            
+  margin: 14px 0;
+  position: relative;
+  overflow: hidden;
+}
+  .balance-card::before { content:''; position:absolute; right:-30px; top:-40px; width:160px; height:160px; border-radius:50%; background:rgba(240,192,64,0.07); }
+  .acct-num { font-family:'Space Mono',monospace; font-size:11px; color:#5a8ab0; margin-bottom:14px; }
+  .bal-label { font-size:10px; letter-spacing:1.5px; color:#7a9ab8; text-transform:uppercase; }
+  .bal-amount {
+  font-family: 'Space Mono', monospace;
+  font-size: 32px;
+  line-height: 1;          
+  font-weight: 700;
+  color: var(--gold);
+  margin: 4px 0 8px;
+  letter-spacing: 0;
+}
+  .holder-name { font-size:12px; color:#c0d8ee; font-weight:500; }
+
+  /* Quick Actions - iOS 26 Liquid Glass */
+  .section-title { font-size:11px; font-weight:600; letter-spacing:1.2px; color:var(--muted); text-transform:uppercase; margin-bottom:12px; }
+  .quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+  .qa-btn { background:rgba(255,255,255,0.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1.2px solid rgba(255,255,255,0.5); border-radius:20px; padding:16px 8px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; transition:all .25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 4px 16px rgba(10,22,40,0.08); position:relative; overflow:hidden; }
+  .qa-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0)); opacity:0; transition:opacity .3s; }
+  .qa-btn:hover { transform:translateY(-6px); border-color:rgba(55,131,221,0.4); background:rgba(255,255,255,0.85); box-shadow:0 8px 28px rgba(55,131,221,0.2); }
+  .qa-btn:hover::before { opacity:1; }
+  .qa-btn:active { transform:scale(0.94) translateY(-2px); }
+  .qa-btn .qa-icon svg { width:40px; height:40px; }
+  .qa-btn .qa-label { font-size:10.5px; font-weight:600; color:var(--blue); text-align:center; line-height:1.3; position:relative; z-index:1; }
+  
+  /* iOS 26 Liquid Glass Quick Actions Section */
+  .qa-section { background:rgba(240,248,255,0.5); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border:1.5px solid rgba(255,255,255,0.6); border-radius:28px; padding:20px 18px 24px; margin-bottom:20px; box-shadow:0 8px 32px rgba(10,22,40,0.12); position:relative; overflow:hidden; }
+  .qa-section::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0)); pointer-events:none; }
+  .qa-section > * { position:relative; z-index:1; }
+  
+  /* Expandable Transaction History */
+  .txn-expand-btn { background:none; border:none; cursor:pointer; font-size:12px; color:var(--muted); transition:transform .3s ease; padding:4px 8px; }
+  .txn-expand-btn.collapsed { transform:rotate(-180deg); }
+  .txn-list-collapsed #txn-list-container { max-height:0; overflow:hidden; opacity:0; }
+  .txn-list-expanded #txn-list-container { max-height:400px; opacity:1; }
+
+  /* Withdraw/Deposit */
+  .wd-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .wd-btn { background:var(--white); border:1.5px solid var(--border); border-radius:16px; padding:16px 10px; display:flex; align-items:center; gap:10px; cursor:pointer; font-family:inherit; transition:border-color .2s,transform .12s; box-shadow:var(--card-sh); }
+  .wd-btn:hover { transform:translateY(-2px); }
+  .wd-btn:active { transform:scale(0.97); }
+  .wd-btn .wd-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .wd-btn.withdraw .wd-icon { background:#e8f2fc; color:var(--blue2); }
+  .wd-btn.deposit  .wd-icon { background:#e1f5ee; color:var(--green); }
+  .wd-btn .wd-text .wd-name { font-size:13px; font-weight:700; color:var(--text); }
+  .wd-btn .wd-text .wd-sub  { font-size:11px; color:var(--muted); }
+
+  /* Transactions */
+  .txn-card {
+  background:#ffffff;
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+  position:relative;
+  z-index:2;
+}
+  .txn-empty { text-align:center; padding:24px 0; color:var(--muted); font-size:13px; }
+  .txn-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 12px;
+  margin-bottom:8px;
+  border-radius:14px;
+  background:#fafbfc;
+  transition:.2s;
+}
+  .txn-item:last-child { border-bottom:none; }
+  .txn-dot {
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+  .txn-dot.credit  { background:#e1f5ee; }
+  .txn-dot.debit   { background:#fceaea; }
+  .txn-dot.pending { background:#fdf4e0; }
+  .txn-info { flex:1; min-width:0; }
+  .txn-info .txn-name {
+  font-size:13px;
+  font-weight:700;
+  color:#0f172a;
+}
+  .txn-info .txn-bal {
+  font-size:11px;
+  color:#94a3b8;
+  margin-top:3px;
+}
+  .txn-amt{
+  margin-left:auto;
+  font-family:'Space Mono', monospace;
+  font-size:14px;
+  font-weight:700;
+  white-space:nowrap;
+}
+  .txn-amt.credit  { color:var(--green); }
+  .txn-amt.debit   { color:var(--red); }
+  .txn-amt.pending { color:#b07d10; }
+
+  /* Modal */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(10,22,40,0.55); z-index:100; align-items:flex-end; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--white); border-radius:24px 24px 0 0; padding:28px 24px 32px; width:100%; max-width:420px; animation:slideUp .25s ease; }
+  @keyframes slideUp { from{transform:translateY(60px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .modal-header .modal-title { font-size:17px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .modal-close { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border); background:none; cursor:pointer; font-size:18px; color:var(--muted); display:flex; align-items:center; justify-content:center; transition:background .2s; }
+  .modal-close:hover { background:var(--bg); }
+  .modal-scanned { background:#e8f2fc; border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--blue2); font-weight:600; display:flex; align-items:center; gap:8px; }
+  .btn-confirm { width:100%; padding:14px; background:var(--navy); color:var(--gold); border:none; border-radius:14px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; margin-top:20px; transition:background .2s,transform .1s; }
+  .btn-confirm:hover { background:var(--navy2); }
+  .btn-confirm:active { transform:scale(0.98); }
+  .btn-confirm.green { background:var(--green); color:#fff; }
+  .btn-confirm.blue  { background:var(--blue2); color:#fff; }
+  .btn-confirm:disabled { opacity:0.6; cursor:not-allowed; }
+
+  /* Toast */
+  .toast { position:fixed; top:28px; left:50%; transform:translateX(-50%) translateY(-80px); background:#1a2540; color:#fff; padding:13px 22px; border-radius:50px; font-size:13px; font-weight:600; box-shadow:0 8px 28px rgba(10,22,40,0.28); z-index:999; transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s; opacity:0; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  .toast.success::before { content:'✓  '; color:#1d9e75; }
+  .toast.error::before   { content:'✕  '; color:#e24b4a; }
+
+  /* Login Screen */
+  .login-hero { background:var(--navy); padding:60px 32px 40px; text-align:center; }
+  .login-hero h1 { font-size:28px; font-weight:700; color:var(--gold); letter-spacing:2px; margin-top:16px; margin-bottom:8px; }
+  .login-hero p { font-size:11px; color:#7a9ab8; letter-spacing:1.5px; }
+  .login-body { background:var(--white); flex:1; border-radius:28px 28px 0 0; margin-top:-20px; padding:32px 28px 28px; display:flex; flex-direction:column; }
+  .login-body h2 { font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .login-body .sub { font-size:13px; color:var(--muted); margin-bottom:24px; }
+  .login-form { flex:1; }
+  .login-actions { display:flex; gap:10px; }
+  .btn-login { flex:1; padding:14px; background:var(--blue); color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:background .2s; }
+  .btn-login:hover { background:var(--blue2); }
+  .btn-signup { flex:1; padding:14px; background:var(--white); color:var(--blue); border:1.5px solid var(--blue); border-radius:14px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:all .2s; }
+  .btn-signup:hover { background:var(--blue); color:#fff; }
+
+  /* iOS Glass Effect */
+  .glass-blur { backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.3); }
+  .menu-dropdown { background:rgba(255,255,255,0.9); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1.5px solid rgba(255,255,255,0.4); }
+  .user-profile { padding:20px 16px; background:rgba(240,192,64,0.08); border-bottom:1.5px solid rgba(0,0,0,0.05); }
+  .user-name { font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .user-info { font-size:11px; color:var(--muted); margin-bottom:10px; font-family:'Space Mono',monospace; word-break:break-all; }
+  .user-info-label { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#9a9aaa; margin-bottom:2px; }
+  .menu-divider { height:1px; background:rgba(0,0,0,0.05); margin:8px 0; }
+  .menu-actions { padding:12px 8px; border-top:1.5px solid rgba(0,0,0,0.05); display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .action-btn { background:rgba(55,131,221,0.1); color:var(--blue); border:1px solid rgba(55,131,221,0.2); border-radius:10px; padding:10px 8px; font-size:10px; font-weight:600; cursor:pointer; transition:all .2s; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .action-btn:hover { background:rgba(55,131,221,0.2); border-color:rgba(55,131,221,0.4); }
+  .action-btn .action-icon { font-size:16px; }
+  .menu-txn-list { max-height:200px; overflow-y:auto; padding:12px 0; border-top:1.5px solid rgba(0,0,0,0.05); }
+  .menu-txn-item { padding:8px 16px; border-bottom:1px solid rgba(0,0,0,0.05); font-size:11px; color:var(--muted); }
+  .menu-txn-item:last-child { border-bottom:none; }
+  .menu-txn-item-label { font-weight:600; color:var(--text); font-size:12px; margin-bottom:2px; }
+
+  /* Transaction History Scrollbar */
+#txn-list-container::-webkit-scrollbar,
+#request-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#txn-list-container::-webkit-scrollbar-thumb,
+#request-list::-webkit-scrollbar-thumb {
+    background: #cfd6df;
+    border-radius: 10px;
+}
+
+#txn-list-container::-webkit-scrollbar-track,
+#request-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#request-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#request-list-container::-webkit-scrollbar-thumb {
+    background: #cfd6df;
+    border-radius: 10px;
+}
+
+#request-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+@media (max-width: 480px) {
+
+  .balance-card {
+    padding: 18px;
+  }
+
+  .bal-amount {
+    font-size: 30px;
+  }
+
+  .acct-num {
+    font-size: 10px;
+  }
+
+  .holder-name {
+    font-size: 11px;
+  }
+
+}
+
+.receipt-menu-btn{
+  position:relative;
+}
+
+.receipt-badge{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  background:#e24b4a;
+  color:white;
+  font-size:10px;
+  font-weight:700;
+  min-width:18px;
+  height:18px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.dashboard-grid{
+    display:block;
+}
+
+@media (min-width:1200px){
+
+    .dashboard-grid{
+        display:grid;
+        grid-template-columns:380px 1fr;
+        gap:24px;
+        align-items:start;
+    }
+
+    .dashboard-left{
+        display:flex;
+        flex-direction:column;
+        gap:20px;
+    }
+
+    .dashboard-right{
+        display:flex;
+        flex-direction:column;
+        gap:20px;
+    }
+
+    .txn-card{
+        width:100%;
+    }
+
+    /* Smaller transaction history */
+    #txn-list-container{
+        max-height:320px !important;
+    }
+
+    /* Smaller request list */
+    #request-list-container{
+        max-height:220px !important;
+    }
+
+    /* Make quick actions more compact */
+    .qa-btn{
+        min-height:80px;
+        padding:12px;
+    }
+
+    .quick-actions{
+        gap:10px;
+    }
+
+}
+.welcome-msg{
+  color:#7a9ab8;
+  font-size:12px;
+  margin-top:8px;
+  margin-bottom:4px;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LOGIN SCREEN -->
+  <div class="screen active" id="screen-login">
+    <div class="login-hero">
+      <div style="font-size:48px">🏦</div>
+      <h1>BANCO DE POGI</h1>
+      <p>SECURE · TRUSTED · ALWAYS HERE</p>
+    </div>
+    <div class="login-body">
+      <h2>Login</h2>
+      <p class="sub">Enter your unique user number to access your account.</p>
+      <div class="login-form">
+        <div class="field"><label>Your Unique User Number</label>
+          <input type="number" id="inp-login-usernum" placeholder="e.g. 54321" autofocus/></div>
+          <div class="field">
+          <label>PIN</label>
+          <input
+             type="password"
+             id="inp-login-pin"
+             maxlength="6"
+             placeholder="Enter your 6-digit PIN"/>
+          </div>
+      </div>
+      <div class="login-actions">
+        <button class="btn-login" id="btn-login">Login</button>
+        <button class="btn-signup" id="btn-show-signup">New Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <div class="screen" id="screen-setup">
+    <div class="setup-hero">
+      <div style="font-size:42px">🏦</div>
+      <h1>BANCO DE POGI</h1>
+      <p>SECURE · TRUSTED · ALWAYS HERE</p>
+    </div>
+    <div class="setup-body">
+      <h2>Create New Account</h2>
+      <p class="sub">Your unique user number will be automatically generated.</p>
+      <div class="field"><label>Full Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Juan dela Cruz"/></div>
+      <div class="field"><label>Create 6-Digit PIN</label>
+        <input type="password" id="inp-pin" maxlength="6" placeholder="e.g. 123456"/></div>
+      <div class="field"><label>Confirm PIN</label>
+        <input type="password" id="inp-pin-confirm" maxlength="6" placeholder="e.g. 123456"/></div>
+      <button class="btn-primary" id="btn-open-acct">Open Account →</button>
+      <button class="btn-primary" id="btn-back-login" style="background:var(--muted); margin-top:6px;">Back to Login</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SCREEN -->
+  <div class="screen" id="screen-dashboard">
+    <div class="dash-header">
+      <div class="brand">
+        <span class="icon">🏦</span>
+        <div class="brand-text"><h3>BANCO DE POGI</h3><p>SECURE · TRUSTED · ALWAYS HERE</p></div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; position:relative;">
+
+  <!-- Notification Bell -->
+  <button class="menu-btn" id="btn-notifications">
+    🔔
+    <span id="notif-count"
+      style="
+      position:absolute;
+      top:-5px;
+      right:-5px;
+      background:red;
+      color:white;
+      font-size:10px;
+      border-radius:50%;
+      width:18px;
+      height:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      display:none;">
+      0
+       </span>
+      </button>
+
+ 
+        <button class="menu-btn" id="btn-menu">☰</button>
+        <div class="menu-dropdown glass-blur" id="menu-dropdown" style="border-radius:20px;">
+          <!-- User Profile Section -->
+          <div class="user-profile">
+            <div class="user-name" id="menu-user-name">—</div>
+            <div style="margin-bottom:10px;">
+              <div class="user-info-label">User Number</div>
+              <div class="user-info" id="menu-user-num">—</div>
+            </div>
+            <div>
+              <div class="user-info-label">Account Number</div>
+              <div class="user-info" id="menu-acct-num">—</div>
+            </div>
+          </div>
+          
+          <!-- Menu Items -->
+          <button class="menu-item" id="menu-verify-info">✓ Verify Personal Info</button>
+          <button class="menu-item" id="menu-change-pin">🔐 Change PIN</button>
+          <button class="menu-item" id="menu-my-qr">📱 My QR Code</button>
+          <button class="menu-item receipt-menu-btn" onclick="openReceipts()">
+            🧾 My Receipts
+            <span id="receiptBadge" class="receipt-badge">0</span>
+           </button>
+          <button class="menu-item danger" id="menu-logout">🚪 Log out</button>
+          
+        
+          <!-- Transaction History -->
+          <div style="padding:12px 16px 0;">
+            <div style="font-size:10px; font-weight:600; letter-spacing:1px; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Recent Transactions</div>
+          </div>
+          <div class="menu-txn-list" id="menu-txn-list">
+            <div class="menu-txn-item" style="text-align:center; color:#9a9aaa;">No transactions yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-scroll">
+
+  <div class="dashboard-grid">
+
+    <!-- LEFT SIDE -->
+    <div class="dashboard-left">
+
+      <div class="balance-card">
+        <div class="acct-num">
+          User Number:
+          <span id="disp-usernum" style="color:#f0c040;font-weight:600;">—</span>
+        </div>
+
+        <div class="acct-num" style="margin-bottom:8px;font-size:10px;color:#7a9ab8;">
+          Account:
+          <span id="disp-acctnum" style="color:#a8c5dc;font-weight:600;">
+            BDP-########
+          </span>
+        </div>
+
+        <div class="bal-label">Available Balance</div>
+        <div class="bal-amount" id="disp-balance">₱ 0.00</div>
+        <div class="welcome-msg" id="welcome-msg">
+          Welcome 👋
+      </div>
+
+      <div class="holder-name" id="disp-name">—</div>
+      </div>
+
+      <div class="wd-row">
+        <button class="wd-btn withdraw" id="btn-withdraw">
+          <div class="wd-icon">↑</div>
+          <div class="wd-text">
+            <div class="wd-name">Withdraw</div>
+            <div class="wd-sub">Pull funds out</div>
+          </div>
+        </button>
+
+        <button class="wd-btn deposit" id="btn-deposit">
+          <div class="wd-icon">↓</div>
+          <div class="wd-text">
+            <div class="wd-name">Deposit</div>
+            <div class="wd-sub">Add funds in</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="qa-section glass-blur-section">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="section-title" style="margin-bottom:0;">
+            Quick Actions
+          </div>
+        </div>
+
+        <div class="quick-actions">
+
+          <button class="qa-btn" id="qa-scan">
+            <div class="qa-icon">📷</div>
+            <span class="qa-label">Scan QR</span>
+          </button>
+
+          <button class="qa-btn" id="qa-bills">
+            <div class="qa-icon">🧾</div>
+            <span class="qa-label">Pay Bills</span>
+          </button>
+
+          <button class="qa-btn" id="qa-send">
+            <div class="qa-icon">📨</div>
+            <span class="qa-label">Send Money</span>
+          </button>
+
+          <button class="qa-btn" id="qa-request">
+            <div class="qa-icon">💳</div>
+            <span class="qa-label">Request Money</span>
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="dashboard-right">
+
+      <div class="txn-card txn-list-expanded">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="section-title" style="margin-bottom:0;">
+            Transaction History
+          </div>
+
+          <button class="txn-expand-btn" id="txn-expand-btn">
+            ▼
+          </button>
+        </div>
+
+        <div id="txn-list-container"
+             style="transition:all .3s ease;max-height:450px;overflow-y:auto;">
+
+          <div id="txn-list">
+            <div class="txn-empty">
+              No transactions yet.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="txn-card" style="margin-top:16px;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="section-title" style="margin-bottom:0;">
+            Money Requests
+          </div>
+        </div>
+
+        <div id="request-list-container"
+             style="max-height:250px;overflow-y:auto;margin-top:10px;">
+
+          <div id="request-list"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+  </div>
+</div>
+
+      
+</div>>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Action</div>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <button class="btn-confirm" id="modal-confirm">Confirm</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  API SERVICE — 
+// ══════════════════════════════════════════════════════
+const API = {
+  BASE: "http://localhost:8080/api",
+
+  async post(url, body) {
+    const response = await fetch(this.BASE + url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Server error");
+    }
+
+    return data;
+  },
+
+  createAccount(name) {
+    return this.post("/account/create", { name });
+  },
+
+  loginAccount(userNum, pin) {
+    return this.post("/account/login", {
+        userNum,
+        pin
+    });
+},
+
+
+  setupPIN(userNum, pin) {
+    return this.post(`/account/${userNum}/setup-pin`, { pin });
+  },
+
+  verifyPIN(userNum, pin) {
+    return this.post(`/account/${userNum}/verify-pin`, { pin });
+  },
+
+  deposit(userNum, amount) {
+    return this.post(`/account/${userNum}/deposit`, { amount });
+  },
+
+  withdraw(userNum, amount) {
+    return this.post(`/account/${userNum}/withdraw`, { amount });
+  },
+
+  payBills(userNum, data) {
+    return this.post(`/account/${userNum}/pay-bills`, data);
+  },
+
+  sendMoney(userNum, data) {
+    return this.post(`/account/${userNum}/send-money`, data);
+  },
+
+  requestMoney(userNum, data) {
+    return this.post(`/account/${userNum}/request-money`, data);
+  },
+
+  
+
+  sendByQR(userNum, qrCode, amount) {
+  return this.post(
+    `/account/${userNum}/send-qr`,
+    {
+      qrCode,
+      amount
+    }
+  );
+  
+},
+getRequests(userNum) {
+
+    return fetch(
+        `${this.BASE}/account/${userNum}/requests`
+    ).then(r => r.json());
+
+},
+
+approveRequest(userNum, requestId) {
+
+    return this.post(
+        `/account/${userNum}/approve-request/${requestId}`,
+        {}
+    );
+
+},
+
+rejectRequest(requestId) {
+  return this.post(
+    `/request/${requestId}/reject`,
+    {}
+  );
+},
+
+changePIN(userNum, currentPin, newPin) {
+  return this.post(
+    `/account/${userNum}/change-pin`,
+    {
+      currentPin,
+      newPin
+    }
+  );
+},
+
+getReceipts(userNum) {
+
+    return fetch(
+        `${this.BASE}/account/${userNum}/receipts`
+    ).then(r => r.json());
+
+},
+
+};
+// ══════════════════════════════════════════════════════
+//  UI CONTROLLER
+// ══════════════════════════════════════════════════════
+let currentUserNum = null;
+let currentQrCode = null;
+let currentQrImage = null;
+
+
+let requestPoller = null;
+let knownRequestIds = new Set();
+
+let notifications = [];
+
+// remembers which requests have already shown a notification
+let notifiedRequestIds = new Set();
+
+
+let pendingPayment = null;
+
+function updateReceiptBadge() {
+
+  const badge =
+    document.getElementById('receiptBadge');
+
+  if (!badge) return;
+
+  const count =
+    currentUser?.receipts?.length || 0;
+
+  badge.textContent = count;
+
+  badge.style.display =
+    count > 0 ? 'flex' : 'none';
+}
+
+function generateReceiptQR(data) {
+
+  const qrContainer =
+    document.getElementById('receiptQR');
+
+  if (!qrContainer) return;
+
+  qrContainer.innerHTML = '';
+
+  new QRCode(qrContainer, {
+    text: `
+Banco De Pogi
+Reference: ${data.refNo}
+Amount: ${data.total}
+Date: ${data.date}
+`,
+    width: 150,
+    height: 150
+  });
+}
+
+function showReceipt(receiptHTML) {
+
+  document.getElementById('receiptContent').innerHTML =
+    receiptHTML;
+
+  document
+    .getElementById('receiptModal')
+    .classList.add('open');
+}
+
+function closeReceipt() {
+
+  document
+    .getElementById('receiptModal')
+    .classList.remove('open');
+}
+
+
+function openReceipts() {
+
+  if (!currentUser.receipts || currentUser.receipts.length === 0) {
+    toast('No receipts found', 'error');
+    return;
+  }
+
+  const receiptsHtml = currentUser.receipts.map(r => `
+    <div class="txn-item" style="cursor:pointer"
+         onclick="viewReceipt('${r.reference_no}')">
+
+      <div class="txn-dot credit">🧾</div>
+
+      <div class="txn-info">
+        <div class="txn-name">${r.type}</div>
+        <div class="txn-bal">
+      ${r.date || r.receipt_date}
+    </div>
+      </div>
+
+      <div class="txn-amt credit">
+        ₱${r.total.toFixed(2)}
+      </div>
+
+    </div>
+  `).join('');
+
+  openModal({
+    title: '🧾 Receipt History',
+    bodyHtml: `
+      <div style="max-height:400px;overflow:auto">
+        ${receiptsHtml}
+      </div>
+    `,
+    confirmLabel: 'Close',
+    onConfirm: () => closeModal()
+  });
+}
+
+function viewReceipt(reference){
+
+  const receipt =
+  currentUser.receipts.find(
+    r =>
+      r.reference === reference ||
+      r.reference_no === reference
+  );
+
+  if(!receipt){
+    toast('Receipt not found','error');
+    return;
+  }
+  console.log(receipt);
+  
+  showReceipt(`
+<div class="receipt-body" id="receiptToDownload">
+
+  <div class="receipt-header">
+    <div class="receipt-logo">🏦</div>
+
+    <div>
+      <h2>BANCO DE POGI</h2>
+      <p>Official Payment Receipt</p>
+    </div>
+  </div>
+
+  <div class="paid-badge">
+    PAID
+  </div>
+
+  <hr>
+
+  <div class="receipt-row">
+    <span>Receipt ID</span>
+    <strong>${receipt.receiptId}</strong>
+  </div>
+
+  <div class="receipt-row">
+    <span>Biller</span>
+    <strong>${receipt.biller}</strong>
+  </div>
+
+  <div class="receipt-row">
+    <span>Reference</span>
+    <strong>${receipt.reference}</strong>
+  </div>
+
+  <div class="receipt-row">
+    <span>Amount</span>
+    <strong>₱${Number(receipt.amount).toFixed(2)}</strong>
+  </div>
+
+  <div class="receipt-row">
+    <span>Fee</span>
+    <strong>₱${Number(receipt.fee).toFixed(2)}</strong>
+  </div>
+
+  <div class="receipt-row total">
+    <span>Total Paid</span>
+    <strong>₱${Number(receipt.total).toFixed(2)}</strong>
+  </div>
+
+  <div class="receipt-row">
+    <span>Date</span>
+    <strong>${new Date().toLocaleString()}</strong>
+  </div>
+
+  <div id="receiptQR" class="receipt-qr"></div>
+
+  <button
+    class="btn-confirm blue"
+    onclick="downloadReceipt()">
+    📥 Download Receipt
+  </button>
+
+</div>
+`);
+
+  generateReceiptQR(receipt);
+
+  
+
+}
+
+
+
+function showPaymentConfirm(amount, fee, total) {
+
+  pendingPayment = {
+    amount,
+    fee,
+    total,
+    biller: val('m-biller'),
+    refNum: val('m-ref')
+  };
+
+  document.getElementById('confirmContent').innerHTML = `
+    <p><b>Biller:</b> ${pendingPayment.biller}</p>
+    <p><b>Reference:</b> ${pendingPayment.refNum}</p>
+    <p><b>Amount:</b> ₱${amount.toFixed(2)}</p>
+    <p><b>Convenience Fee:</b> ₱${fee.toFixed(2)}</p>
+    <hr>
+    <p><b>Total Payment:</b> ₱${total.toFixed(2)}</p>
+  `;
+
+  document.getElementById('paymentConfirmModal')
+    .classList.remove('hidden');
+}
+
+function closePaymentConfirm() {
+  document.getElementById('paymentConfirmModal')
+    .classList.add('hidden');
+}
+
+const txnIcons = {
+  'DEPOSIT': '💰', 'WITHDRAWAL': '💸', 'PAY BILLS': '🧾',
+  'SEND MONEY': '✈️', 'REQUEST': '📨', 'SCAN QR': '📷'
+};
+
+function getTxnMeta(raw) {
+
+  if (raw.startsWith('DEPOSIT'))
+      return { icon:'💰', type:'credit' };
+
+  if (raw.startsWith('WITHDRAWAL'))
+      return { icon:'💸', type:'debit' };
+
+  if (raw.startsWith('SEND MONEY'))
+      return { icon:'✈️', type:'debit' };
+
+  if (raw.startsWith('RECEIVED MONEY'))
+      return { icon:'💵', type:'credit' };
+
+  if (raw.startsWith('REQUEST APPROVED'))
+      return { icon:'✅', type:'debit' };
+
+  if (raw.startsWith('REQUEST RECEIVED'))
+      return { icon:'💵', type:'credit' };
+
+  if (raw.startsWith('PAY BILLS'))
+      return { icon:'🧾', type:'debit' };
+
+  if (raw.startsWith('SCAN QR'))
+      return { icon:'📷', type:'debit' };
+
+  if (raw.startsWith('REQUEST'))
+      return { icon:'📨', type:'pending' };
+
+  return { icon:'💸', type:'debit' };
+}
+
+function parseAmount(raw) {
+  const m = raw.match(/[+-]?₱([\d,.]+)/);
+  return m ? m[0] : '';
+}
+
+function renderDashboard(data) {
+
+ currentQrCode = data.qrCode;
+
+currentQrImage =
+  "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
+  encodeURIComponent(currentQrCode);
+  document.getElementById('disp-usernum').textContent = data.userNum || '—';
+  document.getElementById('disp-acctnum').textContent = data.accountNumber;
+  document.getElementById('disp-name').textContent = data.name;
+
+const hour = new Date().getHours();
+
+let greeting = "Good Evening";
+
+if (hour < 12) {
+  greeting = "Good Morning";
+}
+else if (hour < 18) {
+  greeting = "Good Afternoon";
+}
+
+document.getElementById('welcome-msg').textContent =
+  `${greeting}, ${data.name.split(' ')[0]} 👋`;
+
+  document.getElementById('disp-balance').textContent =
+    '₱ ' + Number(data.balance).toLocaleString('en-PH', { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+  const list = document.getElementById('txn-list');
+  if (!data.transactions || data.transactions.length === 0) {
+    list.innerHTML = '<div class="txn-empty">No transactions yet.</div>';
+    updateMenuTransactions([]);
+    return;
+  }
+  const txnItems = data.transactions.map(t => {
+    const { icon, type } = getTxnMeta(t);
+    const amt = parseAmount(t);
+    const parts = t.split('|');
+    const label = parts.slice(0, 2).join(' | ');
+    const balPart = parts[parts.length - 1].trim();
+    return `
+    <div class="txn-item">
+
+      <div class="txn-dot ${type}">
+        ${icon}
+      </div>
+
+      <div class="txn-info">
+        <div class="txn-name">${label}</div>
+        <div class="txn-bal">${balPart}</div>
+      </div>
+
+      <div class="txn-amt ${type}">
+       ${amt}
+      </div>
+
+    </div>
+    `;
+  }).join('');
+  list.innerHTML = txnItems;
+  updateMenuTransactions(data.transactions);
+}
+
+function addNotification(message) {
+    console.log("NEW NOTIFICATION:", message);
+
+    notifications.unshift(message);
+
+    updateNotificationBell();
+}
+
+//----Money request----
+async function loadRequests() {
+
+    try {
+
+        const requests =
+            await API.getRequests(currentUserNum);
+
+        
+
+        const container =
+            document.getElementById("request-list");
+
+        if (requests.length === 0) {
+
+            container.innerHTML = `
+                <div class="txn-empty">
+                    No pending requests.
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            requests.map(r => `
+
+            <div class="txn-item">
+
+                <div class="txn-dot pending">
+                    📨
+                </div>
+
+                <div class="txn-info">
+
+                    <div class="txn-name">
+                        User #${r.requester_user_num}
+                    </div>
+
+                    <div class="txn-bal">
+                        ${r.note || "No note"}
+                    </div>
+
+                </div>
+
+                <div style="text-align:right;">
+
+                    <div style="
+                         font-size:24px;
+                        font-weight:700;
+                        color:#1d9e75;
+                        margin:8px 0;
+                        ">
+                     ₱${Number(r.amount).toLocaleString('en-PH', {
+                    minimumFractionDigits:2
+                    })}
+                </div>
+
+                    <div style="
+                    display:flex;
+                    gap:6px;
+                     margin-top:10px;
+                    ">
+
+                      <button
+                       onclick="approveRequest(${r.id})"
+                        style="
+                       background:#1d9e75;
+                      color:white;
+                       border:none;
+                      padding:6px 10px;
+                      border-radius:6px;
+                      cursor:pointer;
+                      font-size:11px;
+                      font-weight:600;
+                      ">
+                       Approve
+                    </button>
+
+                      <button
+                        onclick="rejectRequest(${r.id})"
+                          style="
+                          background:#e24b4a;
+                          color:white;
+                          border:none;
+                          padding:6px 10px;
+                          border-radius:6px;
+                          cursor:pointer;
+                          font-size:11px;
+                          font-weight:600;
+                          ">
+                           Reject
+                      </button>
+
+                      </div>
+
+                </div>
+
+            </div>
+
+        `).join("");
+
+    } catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+async function checkForNewRequests() {
+
+    if (!currentUserNum) return;
+
+    try {
+
+        const requests =
+            await API.getRequests(currentUserNum);
+
+        requests.forEach(r => {
+
+    if (!notifiedRequestIds.has(r.id)) {
+
+        notifiedRequestIds.add(r.id);
+
+        addNotification(
+            `📩 User #${r.requester_user_num} requested ₱${Number(r.amount).toLocaleString()}`
+        );
+
+        toast(
+            `New money request: ₱${Number(r.amount).toLocaleString()}`
+        );
+    }
+
+    });
+
+        loadRequests();
+
+    } catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+// ── LOGIN SCREEN ────────────────────────────────────────────
+document.getElementById('btn-login').addEventListener('click', async () => {
+
+  const numStr = document.getElementById('inp-login-usernum').value.trim();
+  const pin = document.getElementById('inp-login-pin').value.trim();
+
+  if (!numStr || !pin) {
+      return toast('Enter User Number and PIN', 'error');
+  }
+
+  const userNum = parseInt(numStr);
+  if (isNaN(userNum)) return toast('Invalid user number.', 'error');
+  try {
+    const data = await API.loginAccount(userNum, pin);
+
+    currentUserNum = userNum;
+
+    currentUser = data;
+    currentUser.receipts =
+    await API.getReceipts(userNum);
+
+    updateReceiptBadge();
+    
+    console.log(currentUser);
+
+    renderDashboard(data);
+    loadRequests();
+    updateMenuDisplay();
+
+    checkForNewRequests();
+
+    if (requestPoller) {
+        clearInterval(requestPoller);
+    }
+
+    requestPoller = setInterval(
+        checkForNewRequests,
+        5000
+    )   ;
+
+    showScreen('screen-dashboard');
+    toast('Welcome back, ' + data.name + '! ✓');
+  } catch(e) { toast(e.message, 'error'); }
+});
+
+document.getElementById('btn-show-signup').addEventListener('click', () => {
+  showScreen('screen-setup');
+});
+
+
+
+// ── Setup ─────────────────────────────────────────────
+document.getElementById('btn-open-acct').addEventListener('click', async () => {
+  const name   = document.getElementById('inp-name').value.trim();
+  const pin    = document.getElementById('inp-pin').value.trim();
+  const pinConfirm = document.getElementById('inp-pin-confirm').value.trim();
+  
+  if (!name || !pin || !pinConfirm) return toast('Please fill in all fields.', 'error');
+  
+  if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+    return toast('PIN must be exactly 6 digits', 'error');
+  }
+  if (pin !== pinConfirm) {
+    return toast('PINs do not match', 'error');
+  }
+  
+  try {
+    const data = await API.createAccount(name);
+    currentUserNum = data.userNum;
+    // Setup PIN immediately after account creation
+    await API.setupPIN(currentUserNum, pin);
+
+    renderDashboard(data);
+    loadRequests();
+    updateMenuDisplay();
+
+    if (requestPoller) {
+        clearInterval(requestPoller);
+    }
+
+    requestPoller = setInterval(
+        checkForNewRequests,
+        5000
+    );
+
+    showScreen('screen-dashboard');
+    toast('Account created! Your User Number: ' + data.userNum + ' ✓');
+  } catch(e) { toast(e.message, 'error'); }
+});
+
+document.getElementById('btn-back-login').addEventListener('click', () => {
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-pin').value = '';
+  document.getElementById('inp-pin-confirm').value = '';
+  showScreen('screen-login');
+});
+
+// ── Logout ────────────────────────────────────────────
+// Hamburger menu toggle
+document.getElementById('btn-menu').addEventListener('click', () => {
+  const dropdown = document.getElementById('menu-dropdown');
+  dropdown.classList.toggle('open');
+  if (dropdown.classList.contains('open')) {
+    updateMenuDisplay();
+  }
+});
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('btn-menu');
+  const dropdown = document.getElementById('menu-dropdown');
+  if (!menu.contains(e.target) && !dropdown.contains(e.target)) {
+    dropdown.classList.remove('open');
+  }
+});
+
+// Update menu display with user info
+function updateMenuDisplay() {
+  if (!currentUserNum) return;
+  const data = { name: document.getElementById('disp-name').textContent, 
+                 userNum: document.getElementById('disp-usernum').textContent,
+                 accountNumber: document.getElementById('disp-acctnum').textContent };
+  document.getElementById('menu-user-name').textContent = data.name;
+  document.getElementById('menu-user-num').textContent = data.userNum;
+  document.getElementById('menu-acct-num').textContent = data.accountNumber;
+}
+
+// Update menu transaction history
+function updateMenuTransactions(transactions) {
+  const menuTxnList = document.getElementById('menu-txn-list');
+  if (!transactions || transactions.length === 0) {
+    menuTxnList.innerHTML = '<div class="menu-txn-item" style="text-align:center; color:#9a9aaa;">No transactions yet</div>';
+    return;
+  }
+  // Show only the last 3 transactions
+  const recentTxns = transactions.slice(0, 3);
+  menuTxnList.innerHTML = recentTxns.map(t => {
+    const { icon } = getTxnMeta(t);
+    const amt = parseAmount(t);
+    const label = t.split('|')[0].trim();
+    return `<div class="menu-txn-item">
+      <div class="menu-txn-item-label">${icon} ${label}</div>
+      <div style="color:#7a9ab8;">${amt}</div>
+    </div>`;
+  }).join('');
+}
+
+// Verify Personal Info
+document.getElementById('menu-verify-info').addEventListener('click', () => {
+  document.getElementById('menu-dropdown').classList.remove('open');
+  openVerifyPersonalInfoModal();
+});
+
+// Change PIN
+document.getElementById('menu-change-pin').addEventListener('click', () => {
+  document.getElementById('menu-dropdown').classList.remove('open');
+  openChangePINModal();
+});
+
+// MY QR CODE
+document.getElementById('menu-my-qr').addEventListener('click', () => {
+  document.getElementById('menu-dropdown').classList.remove('open');
+  openMyQRModal();
+});
+
+// Logout
+document.getElementById('menu-logout').addEventListener('click', () => {
+
+  document.getElementById('menu-dropdown').classList.remove('open');
+
+  if (!confirm('Are you sure you want to log out?')) return;
+
+  currentUserNum = null;
+
+  // STOP REAL-TIME CHECKING
+  if (requestPoller) {
+
+      clearInterval(requestPoller);
+
+      requestPoller = null;
+
+  }
+
+  document.getElementById('inp-login-usernum').value = '';
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-pin').value = '';
+  document.getElementById('inp-pin-confirm').value = '';
+
+  showScreen('screen-login');
+
+});
+
+
+// ── Quick actions wiring ──────────────────────────────
+document.getElementById('qa-scan').addEventListener('click',    openScanQR);
+document.getElementById('qa-bills').addEventListener('click',   openPayBills);
+document.getElementById('qa-send').addEventListener('click',    openSendMoney);
+document.getElementById('qa-request').addEventListener('click', openRequestMoney);
+document.getElementById('btn-withdraw').addEventListener('click',() => openAmountModal('Withdraw', 'withdraw'));
+document.getElementById('btn-deposit').addEventListener('click', () => openAmountModal('Deposit',  'deposit'));
+
+// Transaction History Expand/Collapse
+document.getElementById('txn-expand-btn')?.addEventListener('click', function() {
+  const txnCard = document.querySelector('.txn-card');
+  txnCard.classList.toggle('txn-list-expanded');
+  txnCard.classList.toggle('txn-list-collapsed');
+  this.classList.toggle('collapsed');
+});
+//--- Approve Request----
+async function approveRequest(id) {
+
+    try {
+
+        const data =
+            await API.approveRequest(
+                currentUserNum,
+                id
+            );
+        knownRequestIds.delete(id);
+
+        renderDashboard(data);
+
+        await loadRequests();
+        notifiedRequestIds.delete(id);
+
+        toast(
+            "Request approved successfully!"
+        );
+      knownRequestIds.delete(id);
+
+    } catch (err) {
+
+        toast(
+            err.message,
+            "error"
+        );
+
+    }
+
+}
+//----Reject Request------
+async function rejectRequest(id) {
+    try {
+
+        await fetch(
+            `http://localhost:8080/api/request/${id}/reject`,
+            {
+                method: "POST"
+            }
+        );
+        knownRequestIds.delete(id);
+
+        toast("Request rejected");
+
+        loadRequests();
+
+        notifiedRequestIds.delete(id);
+
+        knownRequestIds.delete(id);
+
+    } catch (err) {
+        toast("Failed to reject request", "error");
+    }
+}
+
+
+
+// ── Modal system ──────────────────────────────────────
+function openModal({ title, bodyHtml, confirmLabel, confirmClass, onConfirm }) {
+  document.getElementById('modal-title').innerHTML = title;
+  document.getElementById('modal-body').innerHTML  = bodyHtml;
+  const btn = document.getElementById('modal-confirm');
+  btn.textContent = confirmLabel || 'Confirm';
+  btn.className   = 'btn-confirm ' + (confirmClass || '');
+  btn.onclick     = onConfirm;
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => {
+    const first = document.querySelector('#modal-body input, #modal-body select');
+    if (first) first.focus();
+  }, 80);
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target.id === 'modal-overlay') closeModal();
+});
+
+function val(id)  { return (document.getElementById(id)||{}).value || ''; }
+function fval(id) { return parseFloat(val(id)) || 0; }
+
+function setConfirmLoading(loading) {
+  const btn = document.getElementById('modal-confirm');
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Processing...' : btn.dataset.label;
+}
+
+// ── Withdraw / Deposit ────────────────────────────────
+function openAmountModal(action, type) {
+  const isDeposit = type === 'deposit';
+  openModal({
+    title: (isDeposit ? '↓ ' : '↑ ') + action + ' Funds',
+    bodyHtml: `<div class="field"><label>Amount (₱)${isDeposit ? ' (Max: ₱500,000)' : ''}</label>
+      <input type="number" id="m-amount" min="1" max="${isDeposit ? '500000' : ''}" placeholder="e.g. 500"/></div>`,
+    confirmLabel: action,
+    confirmClass: isDeposit ? 'green' : '',
+    onConfirm: async () => {
+      const amount = fval('m-amount');
+      if (isDeposit && amount > 500000) {
+        return toast('Deposit limit is ₱500,000', 'error');
+      }
+      try {
+        let data;
+
+        if (isDeposit) {
+            data = await API.deposit(currentUserNum, amount);
+        } else {
+             data = await API.withdraw(currentUserNum, amount);
+        }
+
+
+        renderDashboard(data);
+closeModal();
+
+const refNo =
+  'BPD-' + Math.floor(100000 + Math.random() * 900000);
+  
+
+showReceipt(`
+<div class="receipt-body" id="receiptToDownload">
+
+  <div class="receipt-banner">
+    <div class="receipt-bank">
+      🏦 BANCO DE POGI
+    </div>
+    <div class="receipt-subtitle">
+      Official Digital Receipt
+    </div>
+  </div>
+
+  <div class="receipt-status">
+    ✅ PAYMENT SUCCESSFUL
+  </div>
+
+  <div class="receipt-row">
+      <span>Receipt ID</span>
+      <strong>${receipt.receiptId || receipt.receipt_id}</strong>
+    </div>
+
+    <div class="receipt-row">
+      <span>Biller</span>
+      <strong>${receipt.biller}</strong>
+    </div>
+
+    <div class="receipt-row">
+      <span>Reference No.</span>
+      <strong>${receipt.reference || receipt.reference_no}</strong>
+    </div>
+
+    <div class="receipt-row">
+     <span>Amount</span>
+      <strong>₱${Number(receipt.amount).toFixed(2)}</strong>
+    </div>
+
+    <div class="receipt-row">
+      <span>Convenience Fee</span>
+      <strong>₱${Number(receipt.fee).toFixed(2)}</strong>
+    </div>
+
+    <div class="receipt-row total-row">
+      <span>Total Paid</span>
+      <strong>₱${Number(receipt.total).toFixed(2)}</strong>
+    </div>
+
+    <div class="receipt-row">
+      <span>Date</span>
+      <strong>${receipt.date || receipt.receipt_date}</strong>
+    </div>
+
+      <div class="receipt-qr-title">
+       Scan to verify receipt
+     </div>
+
+  <div id="receiptQR" class="receipt-qr"></div>
+
+  <div class="receipt-footer">
+    Thank you for banking with Banco De Pogi
+  </div>
+
+  <button
+    class="btn-confirm blue"
+    onclick="downloadReceipt()">
+    📥 Download Receipt
+  </button>
+
+</div>
+
+`);
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+// ── Scan QR ───────────────────────────────────────────
+let html5QrCode;
+
+function openScanQR() {
+
+  openModal({
+    title: '📷 Scan QR',
+
+    bodyHtml: `
+      <div id="reader" style="width:100%;"></div>
+
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" id="m-amount">
+      </div>
+    `,
+
+    confirmLabel: 'Pay'
+  });
+
+  // START CAMERA HERE
+  setTimeout(() => {
+
+      html5QrCode = new Html5Qrcode("reader");
+
+      html5QrCode.start(
+    { facingMode: "environment" },
+    {
+        fps: 10,
+        qrbox: 250
+    },
+
+    // SUCCESS
+    (decodedText) => {
+
+    const amount =
+        Number(document.getElementById("m-amount").value);
+
+    if (!amount || amount <= 0) {
+        toast("Enter amount first", "error");
+        return;
+    }
+
+    API.sendByQR(
+        currentUserNum,
+        decodedText,
+        amount
+    )
+    .then(data => {
+
+        renderDashboard(data);
+
+        html5QrCode.stop();
+
+        closeModal();
+
+        toast("Money sent successfully");
+
+    })
+    .catch(err => {
+
+        toast(err.message, "error");
+
+    });
+
+},
+    // ERROR
+    (errorMessage) => {
+
+        console.log("SCAN ERROR:", errorMessage);
+
+    }
+);
+
+  }, 300);
+
+}
+//download receipt
+function downloadReceipt() {
+
+  const receipt =
+    document.getElementById('receiptToDownload');
+
+  html2canvas(receipt).then(canvas => {
+
+    const link =
+      document.createElement('a');
+
+    link.download =
+      'BancoDePogi_Receipt.png';
+
+    link.href =
+      canvas.toDataURL('image/png');
+
+    link.click();
+
+
+  });
+
+}
+
+// ── Pay Bills ─────────────────────────────────────────
+function openReceipts() {
+  console.log(currentUser.receipts);
+
+  if (!currentUser.receipts || currentUser.receipts.length === 0) {
+    toast('No receipts found', 'error');
+    return;
+  }
+
+  const receiptsHtml = currentUser.receipts.map(r => `
+    <div class="txn-item"
+         style="cursor:pointer"
+         onclick="viewReceipt('${r.reference || r.reference_no}')">
+
+      <div class="txn-dot credit">🧾</div>
+
+      <div class="txn-info">
+        <div class="txn-name">${r.biller}</div>
+        <div class="txn-bal">
+        ${r.date || r.receipt_date}
+      </div>
+      </div>
+
+      <div class="txn-amt credit">
+        ₱${Number(r.total).toFixed(2)}
+      </div>
+
+    </div>
+  `).join('');
+
+  openModal({
+    title: '🧾 Receipt History',
+    bodyHtml: `
+      <div style="max-height:400px;overflow-y:auto">
+        ${receiptsHtml}
+      </div>
+    `,
+    confirmLabel: 'Close',
+    onConfirm: () => closeModal()
+  });
+}
+
+function openPayBills() {
+  const billers = [
+  { value: 'MERALCO', text: '⚡ MERALCO (Electricity)' },
+  { value: 'MAYNILAD', text: '💧 Maynilad (Water)' },
+  { value: 'PLDT', text: '📶 PLDT Broadband' },
+  { value: 'GLOBE', text: '📱 Globe Postpaid' },
+  { value: 'SMART', text: '📱 Smart Postpaid' },
+  { value: 'SSS', text: '🏛️ SSS Contribution' },
+  { value: 'PHILHEALTH', text: '🏥 PhilHealth' },
+  { value: 'PAGIBIG', text: '🏠 Pag-IBIG Fund' },
+  { value: 'NETFLIX', text: '🎬 Netflix' },
+  { value: 'SPOTIFY', text: '🎵 Spotify Premium' }
+];
+
+
+
+  const opts = billers.map(b =>
+  `<option value="${b.value}">${b.text}</option>`
+).join('');
+
+  openModal({
+    title: '🧾 Pay Bills',
+    bodyHtml: `
+      <div class="field"><label>Select Biller</label>
+        <select id="m-biller"><option value="">-- Choose a biller --</option>${opts}</select></div>
+      <div class="field"><label>Reference / Account No.</label>
+        <input type="text" id="m-ref" placeholder="e.g. 1234567890"/></div>
+      <div class="field">
+  <label>Amount (₱)</label>
+      <input type="number" id="m-amount" min="1" placeholder="e.g. 2500"/>
+    </div>
+
+    <div id="bill-summary" style="
+      margin-top:15px;
+      padding:15px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      border-radius:12px;
+    ">
+      <h4 style="margin-bottom:10px;">📋 Payment Summary</h4>
+
+      <div style="display:flex;justify-content:space-between;">
+        <span>Biller:</span>
+        <strong id="sum-biller">-</strong>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;">
+        <span>Reference:</span>
+        <strong id="sum-ref">-</strong>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;">
+        <span>Amount:</span>
+        <strong id="sum-amount">₱0.00</strong>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;">
+      <span>Convenience Fee:</span>
+      <strong id="sum-fee">₱15.00</strong>
+    </div>
+
+    <hr style="margin:10px 0;">
+
+    <div style="display:flex;justify-content:space-between;font-size:18px;">
+      <span><strong>Total Deduction:</strong></span>
+      <strong id="sum-total">₱15.00</strong>
+    </div>
+    </div>`,
+    confirmLabel: 'Pay Bill',
+    onConfirm: async () => {
+  try {
+
+    const amount = fval('m-amount');
+    const fee = 15;
+    const total = amount + fee; 
+
+    if (!val('m-biller')) {
+      toast('Please select a biller', 'error');
+      return;
+    }
+
+    if (!val('m-ref')) {
+      toast('Please enter a reference number', 'error');
+      return;
+    }
+
+    if (amount <= 0) {
+      toast('Please enter a valid amount', 'error');
+      return;
+    }
+    
+
+    const data = await API.payBills(currentUserNum, {
+      biller: val('m-biller'),
+      refNum: val('m-ref'),
+      amount: total
+    });
+    currentUser.receipts =
+      await API.getReceipts(currentUserNum);
+
+    updateReceiptBadge();
+
+    renderDashboard(data);
+    closeModal();
+
+    toast(
+      `Paid ₱${amount.toLocaleString('en-PH',{
+        minimumFractionDigits:2
+      })} + ₱${fee} fee to ${val('m-biller')}`
+    );
+
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+  });
+
+  setTimeout(() => {
+
+  const biller = document.getElementById('m-biller');
+  const ref = document.getElementById('m-ref');
+  const amount = document.getElementById('m-amount');
+
+  function updateSummary() {
+
+    document.getElementById('sum-biller').textContent =
+      biller.value || '-';
+
+    document.getElementById('sum-ref').textContent =
+      ref.value || '-';
+
+    const amt = Number(amount.value || 0);
+    const fee = 15;
+    const total = amt + fee;
+
+    document.getElementById('sum-amount').textContent =
+      '₱' + amt.toLocaleString('en-PH', {
+        minimumFractionDigits: 2
+      });
+
+    document.getElementById('sum-fee').textContent =
+      '₱' + fee.toLocaleString('en-PH', {
+        minimumFractionDigits: 2
+      });
+
+    document.getElementById('sum-total').textContent =
+      '₱' + total.toLocaleString('en-PH', {
+       minimumFractionDigits: 2
+      });
+  }
+
+  biller.addEventListener('change', updateSummary);
+  ref.addEventListener('input', updateSummary);
+  amount.addEventListener('input', updateSummary);
+
+}, 50);
+
+}
+
+// ── Send Money ────────────────────────────────────────
+function openSendMoney() {
+  openModal({
+    title: '✈️ Send Money',
+    bodyHtml: `
+      <div class="field">
+      <label>Recipient Account Number</label>
+
+      <div style="
+        display:flex;
+        align-items:center;
+        border:1px solid #ddd;
+        border-radius:12px;
+        overflow:hidden;
+        background:white;
+      ">
+        <span style="
+          padding:12px;
+          background:#f5f5f5;
+          font-weight:600;
+          color:#666;
+          white-space:nowrap;
+        ">
+          BDP-
+        </span>
+
+        <input
+          type="number"
+          id="m-acct"
+          placeholder="123456"
+          style="
+            border:none;
+            flex:1;
+            padding:12px;
+            outline:none;
+            background:white;
+          ">
+      </div>
+    </div>
+      <div class="field"><label>Recipient Name</label>
+        <input type="text" id="m-rcvname" placeholder="e.g. Maria Santos"/></div>
+      <div class="field"><label>Amount (₱)</label>
+        <input type="number" id="m-amount" min="1" placeholder="e.g. 500"/></div>
+      <div class="field"><label>Message / Note (optional)</label>
+        <textarea id="m-note" placeholder="e.g. For groceries"></textarea></div>`,
+    confirmLabel: 'Send Money',
+    confirmClass: 'blue',
+    onConfirm: async () => {
+      try {
+        const data = await API.sendMoney(currentUserNum, {
+          recipientAcct: "BDP-" + val('m-acct'), recipientName: val('m-rcvname'),
+          amount: fval('m-amount'), note: val('m-note')
+        });
+        renderDashboard(data); closeModal();
+        toast('₱' + fval('m-amount').toLocaleString('en-PH',{minimumFractionDigits:2}) + ' sent to ' + val('m-rcvname'));
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+// ── Request Money ─────────────────────────────────────
+function openRequestMoney() {
+  openModal({
+    title: '💳 Request Money',
+    bodyHtml: `
+      <div class="field">
+      <label>Their Account Number</label>
+
+      <div style="
+        display:flex;
+        align-items:center;
+        border:1px solid #ddd;
+        border-radius:12px;
+        overflow:hidden;
+        background:white;
+      ">
+
+        <span style="
+          padding:12px;
+          background:#f5f5f5;
+          font-weight:600;
+          color:#666;
+          white-space:nowrap;
+        ">
+          BDP-
+        </span>
+
+        <input
+          type="number"
+          id="m-acct"
+          placeholder="123456"
+          style="
+            border:none;
+            flex:1;
+            padding:12px;
+            outline:none;
+            background:white;
+          ">
+      </div>
+    </div>
+      <div class="field"><label>Their Name</label>
+        <input type="text" id="m-fromname" placeholder="e.g. Pedro Reyes"/></div>
+      <div class="field"><label>Amount to Request (₱)</label>
+        <input type="number" id="m-amount" min="1" placeholder="e.g. 300"/></div>
+      <div class="field"><label>Reason / Note (optional)</label>
+        <textarea id="m-note" placeholder="e.g. Split for dinner"></textarea></div>`,
+    confirmLabel: 'Send Request',
+    confirmClass: 'green',
+    onConfirm: async () => {
+      try {
+        const data = await API.requestMoney(currentUserNum, {
+          fromAcct: "BDP-" + val('m-acct'), fromName: val('m-fromname'),
+          amount: fval('m-amount'), reason: val('m-note')
+        });
+        renderDashboard(data); closeModal();
+        toast('Request sent to ' + val('m-fromname') + '!');
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+// ── Verify Personal Info ──────────────────────────────
+function openVerifyPersonalInfoModal() {
+  const name = document.getElementById('disp-name').textContent;
+  const acctNum = document.getElementById('disp-acctnum').textContent;
+  const userNum = document.getElementById('disp-usernum').textContent;
+
+  openModal({
+    title: '✓ Personal Information',
+    bodyHtml: `
+      <div style="background:rgba(29,158,117,0.08); border-radius:14px; padding:16px;">
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;color:gray;">FULL NAME</div>
+          <div style="font-weight:700;">${name}</div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;color:gray;">USER NUMBER</div>
+          <div>${userNum}</div>
+        </div>
+
+        <div>
+          <div style="font-size:11px;color:gray;">ACCOUNT NUMBER</div>
+          <div>${acctNum}</div>
+        </div>
+      </div>
+    `,
+    confirmLabel: 'Done',
+    confirmClass: 'green',
+    onConfirm: () => closeModal()
+  });
+}
+//--------MY QR CODE------------
+function openMyQRModal() {
+
+  console.log("QR CODE:", currentQrCode);
+  console.log("QR IMAGE:", currentQrImage);
+
+  openModal({
+    title: '📱 My QR Code',
+
+    bodyHtml: `
+        <div style="text-align:center;">
+
+        <img
+            src="${currentQrImage}"
+            style="
+             width:220px;
+            height:220px;
+            background:white;
+             padding:10px;
+            border-radius:12px;
+             "
+         >
+
+        <div style="
+         margin-top:15px;
+         font-size:18px;
+         font-weight:bold;
+         ">
+          ${currentQrCode}
+        </div>
+
+       <p style="color:gray;">
+    Scan this QR code to send money.
+  </p>
+
+</div>
+`,
+
+    confirmLabel: 'Done',
+    confirmClass: 'green',
+
+    onConfirm: () => {
+      closeModal();
+    }
+  });
+
+}
+
+
+
+
+
+// ── Change PIN ────────────────────────────────────────
+function openChangePINModal() {
+
+  openModal({
+    title: '🔐 Change PIN',
+
+    bodyHtml: `
+      <div class="field">
+        <label>Current PIN</label>
+        <input
+          type="password"
+          id="m-current-pin"
+          maxlength="6">
+      </div>
+
+      <div class="field">
+        <label>New PIN</label>
+        <input
+          type="password"
+          id="m-new-pin"
+          maxlength="6">
+      </div>
+
+      <div class="field">
+        <label>Confirm New PIN</label>
+        <input
+          type="password"
+          id="m-confirm-pin"
+          maxlength="6">
+      </div>
+    `,
+
+    confirmLabel: 'Change PIN',
+    confirmClass: 'blue',
+
+    onConfirm: async () => {
+
+      const currentPin = val('m-current-pin');
+      const newPin = val('m-new-pin');
+      const confirmPin = val('m-confirm-pin');
+
+      if (!currentPin || !newPin || !confirmPin) {
+        return toast('Fill in all fields', 'error');
+      }
+
+      if (newPin.length !== 6) {
+        return toast('PIN must be 6 digits', 'error');
+      }
+
+      if (newPin !== confirmPin) {
+        return toast('PINs do not match', 'error');
+      }
+
+      try {
+
+        await API.changePIN(
+          currentUserNum,
+          currentPin,
+          newPin
+        );
+
+        closeModal();
+
+        toast('PIN changed successfully');
+
+      } catch (e) {
+
+        toast(e.message, 'error');
+
+      }
+
+    }
+  });
+
+}
+// ── Helpers ───────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let toastTimer;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'toast ' + type;
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function addNotification(message) {
+
+    notifications.unshift(message);
+
+    updateNotificationBell();
+
+    knownRequestIds.clear();
+}
+
+function updateNotificationBell() {
+
+    const count = document.getElementById("notif-count");
+
+    if (notifications.length === 0) {
+        count.style.display = "none";
+        return;
+    }
+
+    count.style.display = "flex";
+    count.textContent = notifications.length;
+}
+
+document.getElementById("btn-notifications")
+.addEventListener("click", () => {
+
+    if (notifications.length === 0) {
+        toast("No notifications");
+        return;
+    }
+
+    openModal({
+        title: "🔔 Notifications",
+
+        bodyHtml: notifications
+        .map(n => `
+            <div style="
+                padding:10px;
+                border-bottom:1px solid #eee;">
+                ${n}
+            </div>
+        `)
+        .join(""),
+
+        confirmLabel: "Mark All Read",
+
+        onConfirm: () => {
+
+            notifications.length = 0;
+
+            updateNotificationBell();
+
+            closeModal();
+        }
+    });
+});
+
+
+</script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<div id="paymentConfirmModal" class="payment-confirm-modal hidden">
+  <div class="payment-confirm-card">
+    <h2>Confirm Payment</h2>
+
+    <div id="confirmContent"></div>
+
+    <div class="payment-confirm-actions">
+      <button onclick="closePaymentConfirm()">Cancel</button>
+      <button onclick="confirmPayment()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="receiptModal" class="modal-overlay">
+
+  <div class="modal">
+
+    <div class="modal-header">
+      <div class="modal-title">🧾 Payment Receipt</div>
+      <button class="modal-close" onclick="closeReceipt()">×</button>
+    </div>
+
+    <div id="receiptContent"></div>
+
+    <button class="btn-confirm blue" onclick="closeReceipt()">
+      Done
+    </button>
+
+  </div>
+
+</div>
+
+</body>
+</html>
