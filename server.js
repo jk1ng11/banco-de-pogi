@@ -7,11 +7,9 @@ const app = express(); // MUST be first
 
 app.use(cors({
   origin: "https://banco-de-pogi.netlify.app",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
-app.options("/*", cors()); // FIX FOR RENDER NODE 24
 
 app.use(express.json());
 
